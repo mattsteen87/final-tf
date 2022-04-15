@@ -21,4 +21,4 @@ resource "aws_instance" "car" {
   ami           = "ami-03ededff12e34e59e"
   instance_type = "t2.micro"
 }
-added test
+Removed test
