@@ -86,6 +86,13 @@ resource "aws_security_group" "allow_web" {
     protocol    = "tcp"
     cidr_blocks = ["73.83.181.56/32"]
   }
+  ingress {
+    description = "rdp"
+    from_port   = 3389
+    to_port     = 3389
+    protocol    = "tcp"
+    cidr_blocks = ["73.83.181.56/32"]
+  }
   egress {
     from_port   = 0
     to_port     = 0
@@ -110,6 +117,11 @@ resource "aws_eip" "one" {
   associate_with_private_ip = "10.0.1.50"
   depends_on                = [aws_internet_gateway.gw]
 }
+resource "aws_network_interface" "web-server-nic-2" {
+  subnet_id       = aws_subnet.subnet-1.id
+  private_ips     = ["10.0.1.51"]
+  security_groups = [aws_security_group.allow_web.id]
+}
 resource "aws_instance" "car" {
   ami               = "ami-03ededff12e34e59e"
   instance_type     = "t2.micro"
@@ -125,5 +137,41 @@ resource "aws_instance" "car" {
               EOF
   tags = {
     Name = "cow"
-  }            
+  }
 }
+resource "aws_instance" "car2" {
+  ami               = "ami-03ededff12e34e59e"
+  instance_type     = "t2.micro"
+  availability_zone = "us-east-1a"
+  key_name          = "mattssandbox"
+
+  root_block_device {
+    volume_size = 12
+    volume_type = "gp3"
+  }  
+  ebs_block_device{
+    device_name = "/dev/sdh"
+    volume_size = 10
+    volume_type = "gp3"
+  }
+  network_interface {
+    network_interface_id = aws_network_interface.web-server-nic-2.id
+    device_index         = 0
+  }
+  user_data = <<-EOF
+              #!/bin/bash
+              EOF
+  tags = {
+    Name = "cow2"
+  }
+}/*
+# THis creates a new volume and attaches it. ebs block device adds it on boot.
+resource "aws_ebs_volume" "apples" {
+  availability_zone = "us-east-1a"
+  size              = 10
+}
+resource "aws_volume_attachment" "ebs_att" {
+  device_name = "/dev/sdh"
+  volume_id   = aws_ebs_volume.apples.id
+  instance_id = aws_instance.car2.id
+}*/
